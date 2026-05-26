@@ -814,7 +814,6 @@ export default function App() {
             onClick={() => setIsProfileOpen(true)}
             id="profile-trigger-btn"
             style={{
-              border: 'none',
               background: 'rgba(255,255,255,0.7)',
               backdropFilter: 'blur(10px)',
               borderRadius: '50%',
