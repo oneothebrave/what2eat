@@ -11,6 +11,7 @@ export default defineConfig({
   server: {
     allowedHosts: true, // 允许 Cloudflare 隧道等外部域名访问
     proxy: {
+      // 仅本地开发使用，生产构建时 JSONP 直接调用高德 API
       '/api/amap': {
         target: 'https://restapi.amap.com',
         changeOrigin: true,

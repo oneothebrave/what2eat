@@ -200,6 +200,37 @@ export function curateCandidates(restaurants: Restaurant[], targetCount: number 
   return result;
 }
 
+// ─── JSONP 封装（绕过浏览器跨域限制，直接请求高德 REST API）────────────
+function jsonpFetch(path: string, params: URLSearchParams): Promise<AmapResponse> {
+  return new Promise((resolve, reject) => {
+    // 生成唯一回调名，防止并发请求冲突
+    const cbName = `_amap_${Date.now()}_${(Math.random() * 1e6) | 0}`;
+    params.set('output', 'jsonp');
+    params.set('callback', cbName);
+
+    const script = document.createElement('script');
+    const timer = setTimeout(() => {
+      cleanup();
+      reject(new Error('请求超时'));
+    }, 12000);
+
+    const cleanup = () => {
+      clearTimeout(timer);
+      script.remove();
+      delete (window as unknown as Record<string, unknown>)[cbName];
+    };
+
+    (window as unknown as Record<string, unknown>)[cbName] = (data: AmapResponse) => {
+      cleanup();
+      resolve(data);
+    };
+
+    script.src = `https://restapi.amap.com${path}?${params}`;
+    script.onerror = () => { cleanup(); reject(new Error('网络请求失败')); };
+    document.head.appendChild(script);
+  });
+}
+
 // ─── 单页请求封装 ─────────────────────────────────────────────────────
 async function fetchOnePage(
   apiKey: string,
@@ -217,11 +248,8 @@ async function fetchOnePage(
     offset: String(PAGE_SIZE),
     page: String(page),
     extensions: 'all',
-    output: 'json',
   });
-  const resp = await fetch(`/api/amap/v3/place/around?${params}`);
-  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-  const data: AmapResponse = await resp.json();
+  const data = await jsonpFetch('/v3/place/around', params);
   if (data.status !== '1') throw new Error(`高德 API 错误: ${data.info}`);
   return {
     pois: data.pois ?? [],

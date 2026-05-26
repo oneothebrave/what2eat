@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "tunnel": "node scripts/tunnel.mjs"
+    "tunnel": "node scripts/tunnel.mjs",
+    "deploy": "node scripts/deploy-gitee.mjs"
   },
   "dependencies": {
     "framer-motion": "^12.38.0",
