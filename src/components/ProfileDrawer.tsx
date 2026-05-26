@@ -54,9 +54,10 @@ export function ProfileDrawer({
             transition={{ type: 'spring', stiffness: 320, damping: 30 }}
             style={{
               position: 'fixed',
-              left: '50%',
+              left: 0,
+              right: 0,
               bottom: 0,
-              transform: 'translateX(-50%)',
+              margin: '0 auto',
               width: '100%',
               maxWidth: 430,
               height: '75dvh',

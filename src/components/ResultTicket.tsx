@@ -37,8 +37,8 @@ function buildMapUrl(restaurant: Restaurant): string {
 
 function buildDianpingUrl(restaurant: Restaurant): string {
   const name = encodeURIComponent(restaurant.name);
-  // 美团与点评数据完全互通。美团的 H5 搜索链接（i.meituan.com）对 PC 与手机外部跳转极为友好，不会像大众点评官网（m.dianping.com）那样因 User-Agent 防爬校验而频繁拦截并跳转至 error_page。
-  return `https://i.meituan.com/s/${name}`;
+  // 大众点评移动端 H5 官方最稳定的全局模糊搜索链接路由。使用参数化的 keyword 参数，可避免因城市定位或路径限制导致的“商家未找到”报错。
+  return `https://m.dianping.com/search/keyword?keyword=${name}`;
 }
 
 interface ResultTicketProps {
