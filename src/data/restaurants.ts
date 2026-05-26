@@ -341,3 +341,61 @@ export async function fetchNearbyRestaurants(
     return { all: [], curated: [] };
   }
 }
+
+// ─── 地理编码接口响应声明与服务 ─────────────────────────────────────────
+interface GeocodeResponse {
+  status: string;
+  info: string;
+  geocodes?: {
+    location: string; // "lng,lat"
+    formatted_address: string;
+  }[];
+}
+
+export function searchAddressCoordinate(address: string): Promise<[number, number] | null> {
+  const apiKey = import.meta.env.VITE_AMAP_KEY as string | undefined;
+  if (!apiKey || apiKey === 'your_key_here') {
+    console.warn('[What2Eat] 未配置 VITE_AMAP_KEY，地理编码不可用');
+    return Promise.resolve(null);
+  }
+
+  return new Promise((resolve) => {
+    const cbName = `_amap_geo_${Date.now()}_${(Math.random() * 1e6) | 0}`;
+    const params = new URLSearchParams({
+      key: apiKey,
+      address,
+      output: 'jsonp',
+      callback: cbName,
+    });
+
+    const script = document.createElement('script');
+    const timer = setTimeout(() => {
+      cleanup();
+      resolve(null);
+    }, 8000);
+
+    const cleanup = () => {
+      clearTimeout(timer);
+      script.remove();
+      delete (window as unknown as Record<string, unknown>)[cbName];
+    };
+
+    (window as unknown as Record<string, unknown>)[cbName] = (data: GeocodeResponse) => {
+      cleanup();
+      if (data.status === '1' && data.geocodes && data.geocodes.length > 0) {
+        const [lng, lat] = data.geocodes[0].location.split(',').map(Number);
+        if (Number.isFinite(lng) && Number.isFinite(lat)) {
+          // 返回 [lat, lng] 以匹配 App 中的坐标顺序
+          resolve([lat, lng]);
+          return;
+        }
+      }
+      resolve(null);
+    };
+
+    script.src = `https://restapi.amap.com/v3/geocode/geo?${params}`;
+    script.onerror = () => { cleanup(); resolve(null); };
+    document.head.appendChild(script);
+  });
+}
+

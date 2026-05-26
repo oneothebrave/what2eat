@@ -26,7 +26,6 @@ function getEmoji(cuisine?: string) {
   return cuisine ? (CUISINE_EMOJI[cuisine] ?? '🍽️') : '🍽️';
 }
 
-// ─── 地图跳转 URL ──────────────────────────────────────────────────────────
 function buildMapUrl(restaurant: Restaurant): string {
   const name = encodeURIComponent(restaurant.name);
   if (restaurant.location) {
@@ -36,12 +35,25 @@ function buildMapUrl(restaurant: Restaurant): string {
   return `https://uri.amap.com/search?keyword=${name}&src=what2eat&callnative=1`;
 }
 
+function buildDianpingUrl(restaurant: Restaurant): string {
+  const name = encodeURIComponent(restaurant.name);
+  // 美团与点评数据完全互通。美团的 H5 搜索链接（i.meituan.com）对 PC 与手机外部跳转极为友好，不会像大众点评官网（m.dianping.com）那样因 User-Agent 防爬校验而频繁拦截并跳转至 error_page。
+  return `https://i.meituan.com/s/${name}`;
+}
 
 interface ResultTicketProps {
   restaurant: Restaurant | null;
+  isFavorite: boolean;
+  onToggleFavorite: () => void;
+  onBlacklist: () => void;
 }
 
-export function ResultTicket({ restaurant }: ResultTicketProps) {
+export function ResultTicket({
+  restaurant,
+  isFavorite,
+  onToggleFavorite,
+  onBlacklist,
+}: ResultTicketProps) {
   return (
     <AnimatePresence>
       {restaurant && (
@@ -62,7 +74,7 @@ export function ResultTicket({ restaurant }: ResultTicketProps) {
           }} />
 
           {/* Content row */}
-          <div style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', padding: '14px 16px', gap: 12 }}>
             <span style={{ fontSize: 36, lineHeight: 1, flexShrink: 0 }}>{getEmoji(restaurant.cuisine)}</span>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{
@@ -81,20 +93,83 @@ export function ResultTicket({ restaurant }: ResultTicketProps) {
                 {restaurant.rating && <span>★ {restaurant.rating.toFixed(1)}</span>}
               </div>
 
-              {/* 跳转链接行 */}
-              <motion.a
-                href={buildMapUrl(restaurant)}
-                target="_blank"
-                rel="noopener noreferrer"
-                id={`map-link-${restaurant.id}`}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 }}
-                style={linkStyle}
-              >
-                <PinIcon />
-                在地图中查看
-              </motion.a>
+              {/* Action Buttons Group */}
+              <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                {/* 导航 (高德地图) */}
+                <motion.a
+                  href={buildMapUrl(restaurant)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  id={`map-link-${restaurant.id}`}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                  style={linkStyle}
+                  whileTap={{ scale: 0.96 }}
+                >
+                  <PinIcon />
+                  导航
+                </motion.a>
+
+                {/* 评价 (大众点评) */}
+                <motion.a
+                  href={buildDianpingUrl(restaurant)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  id={`dianping-link-${restaurant.id}`}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.22 }}
+                  style={{
+                    ...linkStyle,
+                    color: '#FF6600',
+                    background: 'rgba(255, 102, 0, 0.06)',
+                    borderColor: 'rgba(255, 102, 0, 0.15)',
+                  }}
+                  whileTap={{ scale: 0.96 }}
+                >
+                  <CommentIcon />
+                  评价
+                </motion.a>
+
+                {/* 我的最爱 (收藏) */}
+                <motion.button
+                  onClick={onToggleFavorite}
+                  id={`fav-btn-${restaurant.id}`}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.26 }}
+                  style={{
+                    ...btnBaseStyle,
+                    background: isFavorite ? 'rgba(255, 59, 48, 0.08)' : 'rgba(120, 120, 128, 0.06)',
+                    borderColor: isFavorite ? 'rgba(255, 59, 48, 0.2)' : 'rgba(120, 120, 128, 0.15)',
+                    color: isFavorite ? '#FF3B30' : 'var(--text-secondary)',
+                  }}
+                  whileTap={{ scale: 0.94 }}
+                >
+                  <span style={{ fontSize: 10, display: 'inline-block' }}>{isFavorite ? '❤️' : '🤍'}</span>
+                  <span>{isFavorite ? '已最爱' : '最爱'}</span>
+                </motion.button>
+
+                {/* 避雷拉黑 */}
+                <motion.button
+                  onClick={onBlacklist}
+                  id={`blacklist-btn-${restaurant.id}`}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  style={{
+                    ...btnBaseStyle,
+                    background: 'rgba(255, 159, 10, 0.08)',
+                    borderColor: 'rgba(255, 159, 10, 0.2)',
+                    color: '#FF9F0A',
+                  }}
+                  whileTap={{ scale: 0.94 }}
+                >
+                  <span style={{ fontSize: 10 }}>⚡</span>
+                  <span>避雷</span>
+                </motion.button>
+              </div>
             </div>
             <div style={{
               fontSize: 11, color: 'var(--text-tertiary)', flexShrink: 0,
@@ -117,11 +192,25 @@ const linkStyle: React.CSSProperties = {
   fontSize: 11,
   color: 'var(--accent)',
   textDecoration: 'none',
-  fontWeight: 500,
-  padding: '2px 6px',
-  borderRadius: 4,
-  background: 'rgba(var(--accent-rgb, 0,122,255), 0.06)',
-  border: '1px solid rgba(var(--accent-rgb, 0,122,255), 0.15)',
+  fontWeight: 600,
+  padding: '3px 8px',
+  borderRadius: 6,
+  background: 'rgba(255,107,53,0.06)',
+  border: '1px solid rgba(255,107,53,0.15)',
+  whiteSpace: 'nowrap' as const,
+};
+
+const btnBaseStyle: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 3,
+  fontSize: 11,
+  fontWeight: 600,
+  padding: '3px 8px',
+  borderRadius: 6,
+  border: '1px solid',
+  cursor: 'pointer',
+  fontFamily: 'inherit',
   whiteSpace: 'nowrap' as const,
 };
 
@@ -134,3 +223,10 @@ function PinIcon() {
   );
 }
 
+function CommentIcon() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
+  );
+}
