@@ -450,7 +450,21 @@ export default function App() {
   const [showAddressPopup, setShowAddressPopup] = useState(false);
   const [popupAddressInput, setPopupAddressInput] = useState('');
 
+  // 偏好面板折叠状态
+  const [isPreferenceCollapsed, setIsPreferenceCollapsed] = useState(true);
+
   const location = useGeolocation();
+
+  // 动态拼装折叠时的快捷偏好描述文案
+  const collapsedText = useMemo(() => {
+    if (onlyFavorites) {
+      return "❤️ 专属最爱保底决策池";
+    }
+    const distText = DISTANCE_OPTIONS.find(o => o.key === distancePreference)?.label ?? '附近';
+    const priceText = PRICE_OPTIONS.find(o => o.key === pricePreference)?.label ?? '预算';
+    const mealText = MEAL_TABS.find(o => o.key === mealType)?.label ?? '全部';
+    return `📍 范围:${distText} · 预算:${priceText} · 品类:${mealText}`;
+  }, [onlyFavorites, distancePreference, pricePreference, mealType]);
 
   const handleManualSearch = async (address: string) => {
     if (!address.trim()) return;
@@ -678,6 +692,7 @@ export default function App() {
     const egg = Math.random() < 0.05;
     setPunchEgg(egg);
     setWinner(null);
+    setIsPreferenceCollapsed(true); // 开始摇号时自动收缩，释放最大视口空间
     setAppState('rolling');
   }, [restaurants]);
 
@@ -1006,25 +1021,73 @@ export default function App() {
           )}
         </motion.div>
 
-        {/* ── Preference controls ── */}
-        <PreferencePanel
-          distancePreference={distancePreference}
-          pricePreference={pricePreference}
-          onDistanceChange={handleDistancePreferenceChange}
-          onPriceChange={handlePricePreferenceChange}
-          disabled={isRolling || onlyFavorites}
-          relaxed={T > 0 && preferenceResult.relaxed && !onlyFavorites}
-        />
+        {/* ── Preference & Category Controls (Collapsible) ── */}
+        <AnimatePresence initial={false}>
+          {isPreferenceCollapsed ? (
+            /* 折叠时的极简药丸条 */
+            <motion.div
+              key="collapsed-bar"
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              onClick={() => !isRolling && setIsPreferenceCollapsed(false)}
+              className="ios-collapsed-bar"
+              style={{ marginBottom: 12, flexShrink: 0 }}
+            >
+              <span className="ios-collapsed-text">
+                {collapsedText}
+              </span>
+              <span className="ios-collapsed-arrow">▼</span>
+            </motion.div>
+          ) : (
+            /* 展开时的完整大面板 */
+            <motion.div
+              key="expanded-panel"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 350, damping: 28 }}
+              style={{ overflow: 'hidden', flexShrink: 0 }}
+            >
+              <PreferencePanel
+                distancePreference={distancePreference}
+                pricePreference={pricePreference}
+                onDistanceChange={handleDistancePreferenceChange}
+                onPriceChange={handlePricePreferenceChange}
+                disabled={isRolling || onlyFavorites}
+                relaxed={T > 0 && preferenceResult.relaxed && !onlyFavorites}
+              />
 
-        {/* ── 菜系过滤 Tab ── */}
-        <div style={{ marginBottom: 12, flexShrink: 0 }}>
-          <MealFilter
-            value={mealType}
-            onChange={(k) => { setMealType(k); setWinner(null); if (appState === 'result') setAppState('idle'); }}
-            disabled={isRolling || onlyFavorites}
-            counts={mealCounts}
-          />
-        </div>
+              <div style={{ marginBottom: 10 }}>
+                <MealFilter
+                  value={mealType}
+                  onChange={(k) => { setMealType(k); setWinner(null); if (appState === 'result') setAppState('idle'); }}
+                  disabled={isRolling || onlyFavorites}
+                  counts={mealCounts}
+                />
+              </div>
+
+              {/* 收起面板的把手按钮 */}
+              <div
+                onClick={() => setIsPreferenceCollapsed(true)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: 18,
+                  marginBottom: 8,
+                  cursor: 'pointer',
+                  fontSize: 11,
+                  color: 'var(--text-tertiary)',
+                  fontWeight: 700,
+                  gap: 3,
+                }}
+              >
+                <span>▲</span> 收起筛选参数
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* ── Machine area ── */}
         <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>

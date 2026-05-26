@@ -265,4 +265,54 @@ body {
   flex-shrink: 0;
 }
 
+/* ─── iOS Collapsed preference bar ─── */
+.ios-collapsed-bar {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  height: 38px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.015);
+  user-select: none;
+  transition: background 0.15s ease;
+}
+
+.ios-collapsed-bar:active {
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.ios-collapsed-text {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ios-collapsed-arrow {
+  font-size: 10px;
+  color: var(--accent);
+  background: rgba(255, 107, 53, 0.08);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-weight: 800;
+}
+
+
 
