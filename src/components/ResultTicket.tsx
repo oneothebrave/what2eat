@@ -35,12 +35,6 @@ function buildMapUrl(restaurant: Restaurant): string {
   return `https://uri.amap.com/search?keyword=${name}&src=what2eat&callnative=1`;
 }
 
-function buildDianpingUrl(restaurant: Restaurant): string {
-  const name = encodeURIComponent(restaurant.name);
-  // 大众点评移动端 H5 官方最稳定的全局模糊搜索链接路由。使用参数化的 keyword 参数，可避免因城市定位或路径限制导致的“商家未找到”报错。
-  return `https://m.dianping.com/search/keyword?keyword=${name}`;
-}
-
 interface ResultTicketProps {
   restaurant: Restaurant | null;
   isFavorite: boolean;
@@ -109,27 +103,6 @@ export function ResultTicket({
                 >
                   <PinIcon />
                   导航
-                </motion.a>
-
-                {/* 评价 (大众点评) */}
-                <motion.a
-                  href={buildDianpingUrl(restaurant)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  id={`dianping-link-${restaurant.id}`}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.22 }}
-                  style={{
-                    ...linkStyle,
-                    color: '#FF6600',
-                    background: 'rgba(255, 102, 0, 0.06)',
-                    borderColor: 'rgba(255, 102, 0, 0.15)',
-                  }}
-                  whileTap={{ scale: 0.96 }}
-                >
-                  <CommentIcon />
-                  评价
                 </motion.a>
 
                 {/* 我的最爱 (收藏) */}
@@ -219,14 +192,6 @@ function PinIcon() {
     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
       <circle cx="12" cy="9" r="2.5" />
-    </svg>
-  );
-}
-
-function CommentIcon() {
-  return (
-    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
     </svg>
   );
 }

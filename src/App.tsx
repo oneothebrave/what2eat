@@ -903,7 +903,7 @@ export default function App() {
                   display: 'flex', 
                   alignItems: 'center', 
                   gap: 3,
-                  textDecoration: isRolling ? 'none' : 'underline',
+                  textDecorationLine: isRolling ? 'none' : 'underline',
                   textDecorationStyle: 'dotted',
                   fontWeight: location.addressName ? 600 : 400,
                   color: location.addressName ? 'var(--text-primary)' : 'var(--text-secondary)'
